@@ -1,44 +1,50 @@
 import React, { useState } from "react";
-import { ReactGrid } from "@silevis/reactgrid";
+import { ReactGrid, Cell } from "@silevis/reactgrid";
 import "@silevis/reactgrid/styles.css";
-// interface Person {
-//   name: string;
-//   surname: string;
-// }
 
-const getPeople = () => [
-	{ name: "Thomas", surname: "Goldman" },
-	{ name: "Susie", surname: "Quattro" },
-	{ name: "", surname: "" },
+const COLUMNS = ["", "A", "B"];
+const DATA = [
+	["Thomas", "Goldman"],
+	["Susie", "Quattro"],
 ];
 
-const getColumns = () => [
-	{ columnId: "name", width: 150 },
-	{ columnId: "surname", width: 150 },
-];
+const getData = () => {
+	return DATA.map((data, idx) => {
+		return { id: (idx + 1).toString(), A: data[0], B: data[1] };
+	});
+};
+
+const getColumns = () => {
+	return COLUMNS.map((column, idx) => {
+		if (idx === 0) {
+			return { columnId: column, width: 40 };
+		}
+		return { columnId: column, width: 80 };
+	});
+};
 
 const headerRow = {
 	rowId: "header",
 	cells: [
-		{ type: "header", text: "Name" },
-		{ type: "header", text: "Surname" },
+		...COLUMNS.map((column) => {
+			return { type: "header", text: column };
+		}),
 	],
 };
-
-const getRows = (people) => [
+const getRows = (data) => [
 	headerRow,
-	...people.map((person, idx) => ({
-		rowId: idx,
+	...data.map((row, idx) => ({
+		rowId: idx + 1,
 		cells: [
-			{ type: "text", text: person.name },
-			{ type: "text", text: person.surname },
+			{ type: "header", text: row.id },
+			{ type: "text", text: row.A },
+			{ type: "text", text: row.B },
 		],
 	})),
 ];
 
 const SampleReactGrid = () => {
-	const [people, setPeople] = useState(getPeople());
-	const [rows, setRows] = useState(getRows(people));
+	const [rows, setRows] = useState(getRows(getData()));
 	const [columns, setColumns] = useState(getColumns());
 
 	const handleContextMenu = (
@@ -56,15 +62,31 @@ const SampleReactGrid = () => {
 					handler: () => {
 						setRows((prevRows) => {
 							return [
-								...prevRows.slice(0, parseInt(selectedRowIds) + 1),
+								...prevRows.slice(0, parseInt(selectedRowIds)),
 								{
 									rowId: parseInt(selectedRowIds),
 									cells: [
+										{
+											type: "header",
+											text: parseInt(selectedRowIds).toString(),
+										},
 										{ type: "text", text: "" },
 										{ type: "text", text: "" },
 									],
 								},
-								...prevRows.slice(parseInt(selectedRowIds) + 1),
+								...prevRows.slice(parseInt(selectedRowIds)).map((row) => {
+									return {
+										...row,
+										rowId: row.rowId + 1,
+										cells: [
+											{
+												type: "header",
+												text: (row.rowId + 1).toString(),
+											},
+											...row.cells.slice(1),
+										],
+									};
+								}),
 							].map((row, idx) => {
 								if (idx > 0) {
 									return { ...row, rowId: idx };
@@ -80,15 +102,31 @@ const SampleReactGrid = () => {
 					handler: () => {
 						setRows((prevRows) => {
 							return [
-								...prevRows.slice(0, parseInt(selectedRowIds) + 2),
+								...prevRows.slice(0, parseInt(selectedRowIds) + 1),
 								{
 									rowId: parseInt(selectedRowIds) + 1,
 									cells: [
+										{
+											type: "header",
+											text: (parseInt(selectedRowIds) + 1).toString(),
+										},
 										{ type: "text", text: "" },
 										{ type: "text", text: "" },
 									],
 								},
-								...prevRows.slice(parseInt(selectedRowIds) + 2),
+								...prevRows.slice(parseInt(selectedRowIds) + 1).map((row) => {
+									return {
+										...row,
+										rowId: row.rowId + 1,
+										cells: [
+											{
+												type: "header",
+												text: (row.rowId + 1).toString(),
+											},
+											...row.cells.slice(1),
+										],
+									};
+								}),
 							].map((row, idx) => {
 								if (idx > 0) {
 									return { ...row, rowId: idx };
@@ -106,10 +144,17 @@ const SampleReactGrid = () => {
 							rows
 								.filter((row) => !selectedRowIds.includes(row.rowId))
 								.map((row, idx) => {
-									if (idx > parseInt(selectedRowIds)) {
-										return { ...row, rowId: idx - 1 };
+									if (idx < selectedRowIds[0]) {
+										return row;
 									}
-									return row;
+									return {
+										...row,
+										rowId: row.rowId - 1,
+										cells: [
+											{ type: "header", text: (row.rowId - 1).toString() },
+											...row.cells.slice(1),
+										],
+									};
 								})
 						);
 					},
@@ -133,22 +178,37 @@ const SampleReactGrid = () => {
 							})
 							.filter((idx) => idx !== undefined)[0];
 
+						const last = String.fromCharCode(
+							columns[columns.length - 1].columnId.charCodeAt(0) + 1
+						);
+
 						setColumns((prevColumns) => {
 							return [
-								...prevColumns.slice(0, columnsIdxs),
-								{ columnId: columnsIdxs.toString(), width: 150 },
-								...prevColumns.slice(columnsIdxs),
+								...prevColumns,
+								{
+									columnId: last,
+
+									width: 80,
+								},
 							];
 						});
 						setRows(
-							rows.map((row) => ({
-								...row,
-								cells: [
-									...row.cells.slice(0, columnsIdxs),
-									{ type: "text", text: "" },
-									...row.cells.slice(columnsIdxs),
-								],
-							}))
+							rows.map((row, idx) => {
+								if (idx === 0) {
+									return {
+										...row,
+										cells: [...row.cells, { type: "header", text: last }],
+									};
+								}
+								return {
+									...row,
+									cells: [
+										...row.cells.slice(0, columnsIdxs),
+										{ type: "text", text: "" },
+										...row.cells.slice(columnsIdxs),
+									],
+								};
+							})
 						);
 					},
 				},
@@ -167,25 +227,37 @@ const SampleReactGrid = () => {
 							})
 							.filter((idx) => idx !== undefined)[0];
 
+						const last = String.fromCharCode(
+							columns[columns.length - 1].columnId.charCodeAt(0) + 1
+						);
+
 						setColumns((prevColumns) => {
 							return [
-								...prevColumns.slice(0, parseInt(columnsIdxs) + 1),
+								...prevColumns,
 								{
-									columnId: (parseInt(columnsIdxs) + 1).toString(),
-									width: 150,
+									columnId: last,
+
+									width: 80,
 								},
-								...prevColumns.slice(parseInt(columnsIdxs) + 1),
 							];
 						});
 						setRows(
-							rows.map((row) => ({
-								...row,
-								cells: [
-									...row.cells.slice(0, parseInt(columnsIdxs) + 1),
-									{ type: "text", text: "" },
-									...row.cells.slice(parseInt(columnsIdxs) + 1),
-								],
-							}))
+							rows.map((row, idx) => {
+								if (idx === 0) {
+									return {
+										...row,
+										cells: [...row.cells, { type: "header", text: last }],
+									};
+								}
+								return {
+									...row,
+									cells: [
+										...row.cells.slice(0, parseInt(columnsIdxs) + 1),
+										{ type: "text", text: "" },
+										...row.cells.slice(parseInt(columnsIdxs) + 1),
+									],
+								};
+							})
 						);
 					},
 				},
@@ -233,16 +305,19 @@ const SampleReactGrid = () => {
 	};
 
 	return (
-		<ReactGrid
-			rows={rows}
-			columns={columns}
-			enableRangeSelection
-			onCellsChanged={handleChanges}
-			onContextMenu={handleContextMenu}
-			enableFillHandle
-			enableRowSelection
-			enableColumnSelection
-		/>
+		<div style={{ backgroundColor: "#ddd", width: "fit-content" }}>
+			<ReactGrid
+				rows={rows}
+				columns={columns}
+				enableRangeSelection
+				onCellsChanged={handleChanges}
+				onContextMenu={handleContextMenu}
+				enableFillHandle
+				enableRowSelection
+				enableColumnSelection
+				enableClipboard={true}
+			/>
+		</div>
 	);
 };
 
