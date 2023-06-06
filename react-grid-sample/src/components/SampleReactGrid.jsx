@@ -21,7 +21,10 @@ const getRows = (row, col) => {
 			rowId: "header",
 			cells: [
 				...columns.map((column) => {
-					return { type: "header", text: column.columnId };
+					return {
+						type: "header",
+						text: column.columnId,
+					};
 				}),
 			],
 		},
@@ -30,7 +33,10 @@ const getRows = (row, col) => {
 	for (let i = 0; i < row; i++) {
 		let tempRows = [];
 		for (let i = 0; i < columns.length - 1; i++) {
-			tempRows.push({ type: "text", text: "" });
+			tempRows.push({
+				type: "text",
+				text: "",
+			});
 		}
 		rowList.push({
 			rowId: i + 1,
@@ -117,6 +123,10 @@ const SampleReactGrid = () => {
 	};
 
 	const handleInsertRowUp = (selectedRowIds) => {
+		let newRow = [];
+		for (let i = 0; i < columns.length - 1; i++) {
+			newRow.push({ type: "text", text: "" });
+		}
 		setRows((prevRows) => {
 			return [
 				...prevRows.slice(0, parseInt(selectedRowIds)),
@@ -127,8 +137,7 @@ const SampleReactGrid = () => {
 							type: "header",
 							text: parseInt(selectedRowIds).toString(),
 						},
-						{ type: "text", text: "" },
-						{ type: "text", text: "" },
+						...newRow,
 					],
 				},
 				...prevRows.slice(parseInt(selectedRowIds)).map((row) => {
@@ -154,6 +163,10 @@ const SampleReactGrid = () => {
 	};
 
 	const handleInsertRowDown = (selectedRowIds) => {
+		let newRow = [];
+		for (let i = 0; i < columns.length - 1; i++) {
+			newRow.push({ type: "text", text: "" });
+		}
 		setRows((prevRows) => {
 			return [
 				...prevRows.slice(0, parseInt(selectedRowIds) + 1),
@@ -164,8 +177,8 @@ const SampleReactGrid = () => {
 							type: "header",
 							text: (parseInt(selectedRowIds) + 1).toString(),
 						},
-						{ type: "text", text: "" },
-						{ type: "text", text: "" },
+
+						...newRow,
 					],
 				},
 				...prevRows.slice(parseInt(selectedRowIds) + 1).map((row) => {
@@ -471,8 +484,9 @@ const SampleReactGrid = () => {
 	};
 
 	return (
-		<div style={{ backgroundColor: "#ddd", width: "fit-content" }}>
+		<div style={{ backgroundColor: "#aaa", width: "fit-content" }}>
 			<ReactGrid
+				style={{ backgroundColor: "#fff" }}
 				rows={rows}
 				columns={columns}
 				onCellsChanged={handleChanges}
