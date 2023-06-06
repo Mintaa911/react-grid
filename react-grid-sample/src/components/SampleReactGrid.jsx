@@ -26,26 +26,28 @@ const getRows = (row, col) => {
 			],
 		},
 	];
+
 	for (let i = 0; i < row; i++) {
+		let tempRows = [];
+		for (let i = 0; i < columns.length - 1; i++) {
+			tempRows.push({ type: "text", text: "" });
+		}
 		rowList.push({
 			rowId: i + 1,
-			cells: [
-				{ type: "header", text: (i + 1).toString() },
-				{ type: "text", text: "" },
-				{ type: "text", text: "" },
-			],
+			cells: [{ type: "header", text: (i + 1).toString() }, ...tempRows],
 		});
 	}
 	return rowList;
 };
 
 const SampleReactGrid = () => {
-	const [rows, setRows] = useState(getRows(3, 2));
-	const [columns, setColumns] = useState(getColumns(2));
+	const [rows, setRows] = useState(getRows(10, 8));
+	const [columns, setColumns] = useState(getColumns(8));
 	const [clipboardData, setClipboardData] = useState();
 
 	const handleCopyRow = (selectedRowIds) => {
 		setClipboardData(rows[selectedRowIds]);
+
 		return { cell: selectedRowIds, clipboard: rows[selectedRowIds] };
 	};
 	const handleCopyColumn = (selectedColIds) => {
@@ -53,21 +55,64 @@ const SampleReactGrid = () => {
 		const data = rows.map((row) => {
 			return { ...row, cells: [row.cells[col]] };
 		});
+
+		setClipboardData(data);
 		return { cell: selectedColIds, clipboard: data };
 	};
 	const handleCopyRange = (selectedRanges) => {
-		console.log(selectedRanges);
+		let data = [];
+		for (let i = 0; i < selectedRanges.length; i++) {
+			const col = selectedRanges[i].columnId.charCodeAt(0) - 64;
+			const row = selectedRanges[i].rowId;
+			data.push({ rowId: row, columnId: col, cell: rows[row].cells[col] });
+		}
+		setClipboardData(data);
 		return selectedRanges;
 	};
 
 	const handlePasteRow = (selectedRowIds) => {
-		return selectedRowIds;
+		let tempRow = Array.from(clipboardData.cells);
+		tempRow[0] = rows[selectedRowIds].cells[0];
+		setRows([
+			...rows.slice(0, selectedRowIds),
+			{ rowId: selectedRowIds, cells: [...tempRow] },
+			...rows.slice(selectedRowIds + 1),
+		]);
 	};
 	const handlePasteColumn = (selectedColIds) => {
+		const col = selectedColIds.charCodeAt(0) - 64;
+		setRows(
+			rows.map((row, idx) => {
+				if (idx > 0) {
+					return {
+						...row,
+						cells: [
+							...row.cells.slice(0, col),
+							clipboardData[idx].cells[0],
+							...row.cells.slice(col + 1),
+						],
+					};
+				}
+
+				return row;
+			})
+		);
 		return selectedColIds;
 	};
 	const handlePasteRange = (selectedRanges) => {
-		console.log(selectedRanges);
+		if (clipboardData.length === selectedRanges.length) {
+			for (let i = 0; i < selectedRanges.length; i++) {
+				const col = selectedRanges[i].columnId.charCodeAt(0) - 64;
+				selectedRanges[i].columnId = col;
+			}
+			let newRow = Array.from(rows);
+			for (let i = 0; i < selectedRanges.length; i++) {
+				const col = selectedRanges[i].columnId;
+				const row = selectedRanges[i].rowId;
+				newRow[row].cells[col] = clipboardData[i].cell;
+			}
+			setRows(newRow);
+		}
 		return selectedRanges;
 	};
 
@@ -316,7 +361,7 @@ const SampleReactGrid = () => {
 					id: "paste",
 					label: "Paste",
 					handler: () => {
-						handlePasteRow(selectedRowIds);
+						handlePasteRow(selectedRowIds[0]);
 					},
 				},
 				{
@@ -413,10 +458,8 @@ const SampleReactGrid = () => {
 				);
 				prevRows[changeRowIdx].cells[changeColumnIdx] = change.newCell;
 			});
-
 			return [...prevRows];
 		});
-		return changes;
 	};
 
 	const handleCellFocus = (location) => {
