@@ -24,6 +24,9 @@ const getRows = (row, col, errorList) => {
 					return {
 						type: "header",
 						text: column.columnId,
+						style: {
+							backgroundColor: "#777",
+						},
 					};
 				}),
 			],
@@ -41,7 +44,16 @@ const getRows = (row, col, errorList) => {
 
 		rowList.push({
 			rowId: i + 1,
-			cells: [{ type: "header", text: (i + 1).toString() }, ...tempRows],
+			cells: [
+				{
+					type: "header",
+					text: (i + 1).toString(),
+					style: {
+						backgroundColor: "#777",
+					},
+				},
+				...tempRows,
+			],
 		});
 	}
 	for (let k = 0; k < errorList.length; k++) {
@@ -51,7 +63,6 @@ const getRows = (row, col, errorList) => {
 		rowList[row].cells[col] = {
 			...rowList[row].cells[col],
 			style: {
-				fontSize: "100px",
 				outline: "1px solid red",
 			},
 		};
