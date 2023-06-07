@@ -60,7 +60,6 @@ const getRows = (row, col, errorList) => {
 };
 
 const SampleReactGrid = ({ error = [] }) => {
-	console.log(error);
 	const [rows, setRows] = useState(getRows(10, 8, error));
 	const [columns, setColumns] = useState(getColumns(8));
 	const [clipboardData, setClipboardData] = useState();
