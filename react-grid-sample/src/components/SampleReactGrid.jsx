@@ -14,7 +14,7 @@ const getColumns = (cols) => {
 	return columns;
 };
 
-const getRows = (row, col) => {
+const getRows = (row, col, errorList) => {
 	const columns = getColumns(col);
 	let rowList = [
 		{
@@ -32,22 +32,36 @@ const getRows = (row, col) => {
 
 	for (let i = 0; i < row; i++) {
 		let tempRows = [];
-		for (let i = 0; i < columns.length - 1; i++) {
+		for (let j = 0; j < columns.length - 1; j++) {
 			tempRows.push({
 				type: "text",
 				text: "",
 			});
 		}
+
 		rowList.push({
 			rowId: i + 1,
 			cells: [{ type: "header", text: (i + 1).toString() }, ...tempRows],
 		});
 	}
+	for (let k = 0; k < errorList.length; k++) {
+		const col = errorList[k].column + 1;
+		const row = errorList[k].row + 1;
+
+		rowList[row].cells[col] = {
+			...rowList[row].cells[col],
+			style: {
+				fontSize: "100px",
+				outline: "1px solid red",
+			},
+		};
+	}
 	return rowList;
 };
 
-const SampleReactGrid = () => {
-	const [rows, setRows] = useState(getRows(10, 8));
+const SampleReactGrid = ({ error = [] }) => {
+	console.log(error);
+	const [rows, setRows] = useState(getRows(10, 8, error));
 	const [columns, setColumns] = useState(getColumns(8));
 	const [clipboardData, setClipboardData] = useState();
 
